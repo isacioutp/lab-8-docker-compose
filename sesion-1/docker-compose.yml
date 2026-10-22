@@ -1,0 +1,14 @@
+# Sesión 1 — Paso 1: tu PRIMER stack (red plana, todos ven a todos).
+# Uso:  docker compose up -d
+services:
+  web:
+    image: nginx:alpine
+    ports: ["8080:80"]
+
+  api:
+    build: ./api
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_PASSWORD: labpass123

@@ -1,0 +1,22 @@
+# Respaldos generados durante la práctica
+respaldo_lab14.sql
+*.sql.gz
+
+# Claves SSH del ejercicio de acceso seguro
+id_lab14
+id_lab14.pub
+*.pem
+
+# Configuración local (variables de entorno con credenciales)
+.env
+
+# Sistema operativo y editores
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.py[cod]

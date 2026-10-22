@@ -1,0 +1,50 @@
+# Sesión 1 — Paso 3: el MISMO stack, ya segmentado en front/back + DNS.
+# Uso:  docker compose -f docker-compose.segmentado.yml up -d
+services:
+  dns:
+    image: strm/dnsmasq
+    container_name: dns-corp
+    volumes: [ ./dnsmasq.conf:/etc/dnsmasq.conf:ro ]
+    networks:
+      front: { ipv4_address: 172.28.10.53 }
+    command: ["-k", "--log-facility=-", "-u", "root"]   # -u root evita el fallo "setting capabilities"
+
+  web:
+    image: nginx:alpine
+    container_name: web-srv
+    ports: ["8080:80"]
+    depends_on: [api]
+    networks:
+      front: { ipv4_address: 172.28.10.10 }
+
+  api:
+    build: ./api
+    container_name: api-srv
+    networks:
+      front: { ipv4_address: 172.28.10.20 }
+      back:  { ipv4_address: 172.28.20.10 }
+
+  db:
+    image: postgres:15-alpine
+    container_name: db-srv
+    environment:
+      POSTGRES_PASSWORD: labpass123
+    volumes: [pgdata:/var/lib/postgresql/data]
+    networks:
+      back: { ipv4_address: 172.28.20.20 }
+
+networks:
+  front:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.10.0/24
+  back:
+    driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.28.20.0/24
+
+volumes:
+  pgdata: {}
