@@ -415,10 +415,15 @@ Resultado: 7 OK, 0 FALLO
 
 Haz un cambio, predice qué pasará, ejecútalo y explica el resultado:
 
-1. **Publica la DB.** Añade a `db` un `ports: ["5432:5432"]` y `up -d`. Desde el
-   host, `nc -zv localhost 5432` ahora conecta → la segmentación se rompió
-   **desde el host** aunque las redes sigan separadas. (*Por eso `ports:` importa.*)
-   Deshaz el cambio al terminar.
+1. **Publica la DB.** Añade a `db` un `ports: ["5432:5432"]` y `up -d`. Ojo:
+   **no basta** — la DB vive en `back`, que es `internal: true`, y eso también
+   corta el NAT hacia el host, así que el puerto se ignora en silencio
+   (`docker inspect db-srv --format '{{json .NetworkSettings.Ports}}'` →
+   `{"5432/tcp":null}`). Quita también `internal: true` de `back` y entonces sí:
+   desde el host, `nc -zv localhost 5432` conecta → la segmentación se rompió
+   **desde el host** aunque las redes sigan separadas. (*Por eso `ports:` importa:
+   publicar son **dos** condiciones — `ports:` en el YAML y que el contenedor
+   tenga camino de salida al host.*) Deshaz los dos cambios al terminar.
 2. **Quita `internal: true`** de `back` y `up -d`. La web sigue sin tener ruta a
    `back` (el aislamiento *entre* redes lo da la pertenencia, no `internal`), pero
    los contenedores de `back` ahora **sí salen a Internet** (NAT). Concluye:
@@ -493,7 +498,7 @@ docker compose exec web nslookup api.local 172.28.10.53
 
 | Síntoma | Causa | Solución |
 |---------|-------|----------|
-| `web` sí alcanza la DB | falta `internal: true` o la DB publica `ports:` | corregir el YAML y `up -d` |
+| `web` sí alcanza la DB | `web` y `db` comparten red (o la DB publica `ports:`) | sacar a `web` de `back`; revisar que la DB no publique puertos |
 | Los nombres DNS no resuelven | IP del servicio ≠ IP en `dnsmasq.conf` | sincronizar `ipv4_address` |
 | `port is already allocated` | otro stack usa el 8080 | `docker compose down` del otro |
 | `network ... already exists` / solape de subred | otra sesión sigue levantada | `docker compose down -v` |
